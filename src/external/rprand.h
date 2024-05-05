@@ -147,13 +147,8 @@ RPRANDAPI void rprand_unload_sequence(int *sequence);           // Unload pseudo
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static uint64_t rprand_seed = 0xAABBCCDD;       // SplitMix64 default seed (aligned to rprand_state)
-static uint32_t rprand_state[4] = {             // Xoshiro128** state, initialized by SplitMix64
-    0x96ea83c1,
-    0x218b21e5,
-    0xaa91febd,
-    0x976414d4
-};        
+static uint64_t rprand_seed = 0;                // SplitMix64 actual seed
+static uint32_t rprand_state[4] = { 0 };        // Xoshiro128** state, nitialized by SplitMix64
 
 //----------------------------------------------------------------------------------
 // Module internal functions declaration
@@ -207,7 +202,7 @@ int *rprand_load_sequence(unsigned int count, int min, int max)
     {
         value = ((unsigned int)rprand_xoshiro()%(abs(max - min) + 1)) + min;
 
-        for (unsigned int j = 0; j < i; j++)
+        for (int j = 0; j < i; j++)
         {
             if (sequence[j] == value)
             {

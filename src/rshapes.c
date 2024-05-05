@@ -178,9 +178,8 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        // WARNING: Adding 0.5f offset to "center" point on selected pixel
-        rlVertex2f((float)startPosX + 0.5f, (float)startPosY + 0.5f);
-        rlVertex2f((float)endPosX + 0.5f, (float)endPosY + 0.5f);
+        rlVertex2f((float)startPosX, (float)startPosY);
+        rlVertex2f((float)endPosX, (float)endPosY);
     rlEnd();
 }
 
@@ -189,26 +188,26 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        // WARNING: Adding 0.5f offset to "center" point on selected pixel
-        rlVertex2f(startPos.x + 0.5f, startPos.y + 0.5f);
-        rlVertex2f(endPos.x + 0.5f, endPos.y + 0.5f);
+        rlVertex2f(startPos.x, startPos.y);
+        rlVertex2f(endPos.x, endPos.y);
     rlEnd();
 }
 
 // Draw lines sequuence (using gl lines)
 void DrawLineStrip(Vector2 *points, int pointCount, Color color)
 {
-    if (pointCount < 2) return; // Security check
+    if (pointCount >= 2)
+    {
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-    rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-
-        for (int i = 0; i < pointCount - 1; i++)
-        {
-            rlVertex2f(points[i].x, points[i].y);
-            rlVertex2f(points[i + 1].x, points[i + 1].y);
-        }
-    rlEnd();
+            for (int i = 0; i < pointCount - 1; i++)
+            {
+                rlVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+            }
+        rlEnd();
+    }
 }
 
 // Draw line using cubic-bezier spline, in-out interpolation, no control points
@@ -808,25 +807,30 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 }
 
 // Draw rectangle outline
-// WARNING: All Draw*Lines() functions use RL_LINES for drawing,
-// it implies flushing the current batch and changing draw mode to RL_LINES
-// but it solves another issue: https://github.com/raysan5/raylib/issues/3884
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
+#if defined(SUPPORT_QUADS_DRAW_MODE)
+    DrawRectangle(posX, posY, width, 1, color);
+    DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
+    DrawRectangle(posX, posY + height - 1, width, 1, color);
+    DrawRectangle(posX, posY + 1, 1, height - 2, color);
+#else
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f((float)posX, (float)posY);
-        rlVertex2f((float)posX + (float)width, (float)posY + 1);
+        rlVertex2f(posX + 1, posY + 1);
+        rlVertex2f(posX + width, posY + 1);
 
-        rlVertex2f((float)posX + (float)width, (float)posY + 1);
-        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
+        rlVertex2f(posX + width, posY + 1);
+        rlVertex2f(posX + width, posY + height);
 
-        rlVertex2f((float)posX + (float)width, (float)posY + (float)height);
-        rlVertex2f((float)posX + 1, (float)posY + (float)height);
+        rlVertex2f(posX + width, posY + height);
+        rlVertex2f(posX + 1, posY + height);
 
-        rlVertex2f((float)posX + 1, (float)posY + (float)height);
-        rlVertex2f((float)posX + 1, (float)posY + 1);
+        rlVertex2f(posX + 1, posY + height);
+        rlVertex2f(posX + 1, posY + 1);
     rlEnd();
+#endif
 }
 
 // Draw rectangle outline with extended parameters
@@ -1086,15 +1090,8 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 #endif
 }
 
-// Draw rectangle with rounded edges
-// TODO: This function should be refactored to use RL_LINES, for consistency with other Draw*Lines()
-void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
-{
-    DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
-}
-
 // Draw rectangle with rounded edges outline
-void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color)
+void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color)
 {
     if (lineThick < 0) lineThick = 0;
 
@@ -2204,7 +2201,7 @@ bool CheckCollisionPointPoly(Vector2 point, Vector2 *points, int pointCount)
         for (int i = 0, j = pointCount - 1; i < pointCount; j = i++)
         {
             if ((points[i].y > point.y) != (points[j].y > point.y) &&
-                (point.x < (points[j].x - points[i].x)*(point.y - points[i].y)/(points[j].y - points[i].y) + points[i].x))
+                (point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
             {
                 inside = !inside;
             }
@@ -2348,16 +2345,11 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 // NOTE: Used by DrawLineBezier() only
 static float EaseCubicInOut(float t, float b, float c, float d)
 {
-    float result = 0.0f;
+    if ((t /= 0.5f*d) < 1) return 0.5f*c*t*t*t + b;
 
-    if ((t /= 0.5f*d) < 1) result = 0.5f*c*t*t*t + b;
-    else
-    {
-        t -= 2;
-        result = 0.5f*c*(t*t*t + 2.0f) + b;
-    }
+    t -= 2;
 
-    return result;
+    return 0.5f*c*(t*t*t + 2.0f) + b;
 }
 
 #endif      // SUPPORT_MODULE_RSHAPES
