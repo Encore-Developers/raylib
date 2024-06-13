@@ -226,7 +226,7 @@ void DrawTriangle3D(Vector3 v1, Vector3 v2, Vector3 v3, Color color)
 }
 
 // Draw a triangle strip defined by points
-void DrawTriangleStrip3D(Vector3 *points, int pointCount, Color color)
+void DrawTriangleStrip3D(const Vector3 *points, int pointCount, Color color)
 {
     if (pointCount < 3) return; // Security check
 
@@ -4864,7 +4864,7 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
     for (unsigned int i = 0; i < skin.joints_count; i++)
     {
         cgltf_node node = *skin.joints[i];
-        strncpy(bones[i].name, node.name, sizeof(bones[i].name));
+        if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name));
 
         // Find parent bone index
         unsigned int parentIndex = -1;
@@ -5772,8 +5772,11 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     animDuration = (t > animDuration)? t : animDuration;
                 }
 
-                strncpy(animations[i].name, animData.name, sizeof(animations[i].name));
-                animations[i].name[sizeof(animations[i].name) - 1] = '\0';
+                if (animData.name != NULL)
+                {
+                    strncpy(animations[i].name, animData.name, sizeof(animations[i].name));
+                    animations[i].name[sizeof(animations[i].name) - 1] = '\0';
+                }
 
                 animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY) + 1;
                 animations[i].framePoses = RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
@@ -5823,7 +5826,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     BuildPoseFromParentJoints(animations[i].bones, animations[i].boneCount, animations[i].framePoses[j]);
                 }
 
-                TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s (%d frames, %fs)", fileName, animData.name, animations[i].frameCount, animDuration);
+                TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s (%d frames, %fs)", fileName, (animData.name != NULL)? animData.name : "NULL", animations[i].frameCount, animDuration);
                 RL_FREE(boneChannels);
             }
         }
