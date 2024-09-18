@@ -1,13 +1,15 @@
 #version 120
 
+precision mediump float;
+
 // This shader is based on the basic lighting shader
 // This only supports one light, which is directional, and it (of course) supports shadows
 
 // Input vertex attributes (from vertex shader)
-varying vec3 fragPosition;
-varying vec2 fragTexCoord;
+varying in vec3 fragPosition;
+varying in vec2 fragTexCoord;
 //varying in vec4 fragColor;
-varying vec3 fragNormal;
+varying in vec3 fragNormal;
 
 // Input uniform values
 uniform sampler2D texture0;

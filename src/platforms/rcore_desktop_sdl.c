@@ -64,7 +64,7 @@ typedef struct {
     SDL_Window *window;
     SDL_GLContext glContext;
 
-    SDL_GameController *gamepad[MAX_GAMEPADS];
+    SDL_Joystick *gamepad[MAX_GAMEPADS];
     SDL_Cursor *cursor;
     bool cursorRelative;
 } PlatformData;
@@ -80,7 +80,7 @@ static PlatformData platform = { 0 };   // Platform specific data
 // Local Variables Definition
 //----------------------------------------------------------------------------------
 #define SCANCODE_MAPPED_NUM 232
-static const KeyboardKey mapScancodeToKey[SCANCODE_MAPPED_NUM] = {
+static const KeyboardKey ScancodeToKey[SCANCODE_MAPPED_NUM] = {
     KEY_NULL,           // SDL_SCANCODE_UNKNOWN
     0,
     0,
@@ -476,9 +476,9 @@ void ClearWindowState(unsigned int flags)
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    SDL_Surface *iconSurface = NULL;
+    SDL_Surface* iconSurface = NULL;
 
-    unsigned int rmask = 0, gmask = 0, bmask = 0, amask = 0;
+    Uint32 rmask, gmask, bmask, amask;
     int depth = 0;  // Depth in bits
     int pitch = 0;  // Pixel spacing (pitch) in bytes
 
@@ -492,67 +492,72 @@ void SetWindowIcon(Image image)
         case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
             rmask = 0xFF, gmask = 0xFF00;
             bmask = 0, amask = 0;
-            depth = 16, pitch = image.width*2;
+            depth = 16, pitch = image.width * 2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
             rmask = 0xF800, gmask = 0x07E0;
             bmask = 0x001F, amask = 0;
-            depth = 16, pitch = image.width*2;
+            depth = 16, pitch = image.width * 2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8: // Uses BGR for 24-bit
             rmask = 0x0000FF, gmask = 0x00FF00;
             bmask = 0xFF0000, amask = 0;
-            depth = 24, pitch = image.width*3;
+            depth = 24, pitch = image.width * 3;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
             rmask = 0xF800, gmask = 0x07C0;
             bmask = 0x003E, amask = 0x0001;
-            depth = 16, pitch = image.width*2;
+            depth = 16, pitch = image.width * 2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
             rmask = 0xF000, gmask = 0x0F00;
             bmask = 0x00F0, amask = 0x000F;
-            depth = 16, pitch = image.width*2;
+            depth = 16, pitch = image.width * 2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
             rmask = 0xFF000000, gmask = 0x00FF0000;
             bmask = 0x0000FF00, amask = 0x000000FF;
-            depth = 32, pitch = image.width*4;
+            depth = 32, pitch = image.width * 4;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R32:
             rmask = 0xFFFFFFFF, gmask = 0;
             bmask = 0, amask = 0;
-            depth = 32, pitch = image.width*4;
+            depth = 32, pitch = image.width * 4;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
             rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
             bmask = 0xFFFFFFFF, amask = 0;
-            depth = 96, pitch = image.width*12;
+            depth = 96, pitch = image.width * 12;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
             rmask = 0xFFFFFFFF, gmask = 0xFFFFFFFF;
             bmask = 0xFFFFFFFF, amask = 0xFFFFFFFF;
-            depth = 128, pitch = image.width*16;
+            depth = 128, pitch = image.width * 16;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R16:
             rmask = 0xFFFF, gmask = 0;
             bmask = 0, amask = 0;
-            depth = 16, pitch = image.width*2;
+            depth = 16, pitch = image.width * 2;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
             rmask = 0xFFFF, gmask = 0xFFFF;
             bmask = 0xFFFF, amask = 0;
-            depth = 48, pitch = image.width*6;
+            depth = 48, pitch = image.width * 6;
             break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
             rmask = 0xFFFF, gmask = 0xFFFF;
             bmask = 0xFFFF, amask = 0xFFFF;
-            depth = 64, pitch = image.width*8;
+            depth = 64, pitch = image.width * 8;
             break;
-        default: return; // Compressed formats are not supported
+        default:
+            // Compressed formats are not supported
+            return;
     }
 
-    iconSurface = SDL_CreateRGBSurfaceFrom( image.data, image.width, image.height, depth, pitch, rmask, gmask, bmask, amask );
+    iconSurface = SDL_CreateRGBSurfaceFrom(
+        image.data, image.width, image.height, depth, pitch,
+        rmask, gmask, bmask, amask
+    );
 
     if (iconSurface)
     {
@@ -594,7 +599,7 @@ void SetWindowMonitor(int monitor)
         // 1. SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         //    see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
         // 2. A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again.
-        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0)? true : false;
+        const bool wasFullscreen = ((CORE.Window.flags & FLAG_FULLSCREEN_MODE) > 0) ? true : false;
 
         const int screenWidth = CORE.Window.screen.width;
         const int screenHeight = CORE.Window.screen.height;
@@ -936,15 +941,15 @@ int SetGamepadMappings(const char *mappings)
 // Set gamepad vibration
 void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor)
 {
-    // Limit input values to between 0.0f and 1.0f
-    leftMotor  = (0.0f > leftMotor)? 0.0f : leftMotor;
-    rightMotor = (0.0f > rightMotor)? 0.0f : rightMotor;
-    leftMotor  = (1.0f < leftMotor)? 1.0f : leftMotor;
-    rightMotor = (1.0f < rightMotor)? 1.0f : rightMotor;
+    //Limit input values to between 0.0f and 1.0f
+    leftMotor  = (0.0f > leftMotor)  ? 0.0f : leftMotor;
+    rightMotor = (0.0f > rightMotor) ? 0.0f : rightMotor;
+    leftMotor  = (1.0f < leftMotor)  ? 1.0f : leftMotor;
+    rightMotor = (1.0f < rightMotor) ? 1.0f : rightMotor;
 
     if (IsGamepadAvailable(gamepad))
     {
-        SDL_GameControllerRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), (Uint32)(MAX_GAMEPAD_VIBRATION_TIME*1000.0f));
+        SDL_JoystickRumble(platform.gamepad[gamepad], (Uint16)(leftMotor*65535.0f), (Uint16)(rightMotor*65535.0f), (Uint32)(MAX_GAMEPAD_VIBRATION_TIME*1000.0f));
     }
 }
 
@@ -964,12 +969,6 @@ void SetMouseCursor(int cursor)
     SDL_SetCursor(platform.cursor);
 
     CORE.Input.Mouse.cursor = cursor;
-}
-
-// Get physical key name.
-const char *GetKeyName(int key)
-{
-    return SDL_GetKeyName(key);
 }
 
 static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
@@ -1133,8 +1132,7 @@ void PollInputEvents(void)
             {
                 KeyboardKey key = ConvertScancodeToKey(event.key.keysym.scancode);
 
-                if (key != KEY_NULL)
-                {
+                if (key != KEY_NULL) {
                     // If key was up, add it to the key pressed queue
                     if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
                     {
@@ -1251,15 +1249,15 @@ void PollInputEvents(void)
 
                 if (!CORE.Input.Gamepad.ready[jid] && (jid < MAX_GAMEPADS))
                 {
-                    platform.gamepad[jid] = SDL_GameControllerOpen(jid);
+                    platform.gamepad[jid] = SDL_JoystickOpen(jid);
 
                     if (platform.gamepad[jid])
                     {
                         CORE.Input.Gamepad.ready[jid] = true;
-                        CORE.Input.Gamepad.axisCount[jid] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[jid]));
+                        CORE.Input.Gamepad.axisCount[jid] = SDL_JoystickNumAxes(platform.gamepad[jid]);
                         CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                         CORE.Input.Gamepad.axisState[jid][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-                        strncpy(CORE.Input.Gamepad.name[jid], SDL_GameControllerNameForIndex(jid), 63);
+                        strncpy(CORE.Input.Gamepad.name[jid], SDL_JoystickName(platform.gamepad[jid]), 63);
                         CORE.Input.Gamepad.name[jid][63] = '\0';
                     }
                     else
@@ -1272,15 +1270,15 @@ void PollInputEvents(void)
             {
                 int jid = event.jdevice.which;
 
-                if (jid == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[jid])))
+                if (jid == SDL_JoystickInstanceID(platform.gamepad[jid]))
                 {
-                    SDL_GameControllerClose(platform.gamepad[jid]);
-                    platform.gamepad[jid] = SDL_GameControllerOpen(0);
+                    SDL_JoystickClose(platform.gamepad[jid]);
+                    platform.gamepad[jid] = SDL_JoystickOpen(0);
                     CORE.Input.Gamepad.ready[jid] = false;
                     memset(CORE.Input.Gamepad.name[jid], 0, 64);
                 }
             } break;
-            case SDL_CONTROLLERBUTTONDOWN:
+            case SDL_JOYBUTTONDOWN:
             {
                 int button = -1;
 
@@ -1314,7 +1312,7 @@ void PollInputEvents(void)
                     CORE.Input.Gamepad.lastButtonPressed = button;
                 }
             } break;
-            case SDL_CONTROLLERBUTTONUP:
+            case SDL_JOYBUTTONUP:
             {
                 int button = -1;
 
@@ -1348,7 +1346,7 @@ void PollInputEvents(void)
                     if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
                 }
             } break;
-            case SDL_CONTROLLERAXISMOTION:
+            case SDL_JOYAXISMOTION:
             {
                 int axis = -1;
 
@@ -1366,13 +1364,13 @@ void PollInputEvents(void)
                 if (axis >= 0)
                 {
                     // SDL axis value range is -32768 to 32767, we normalize it to RayLib's -1.0 to 1.0f range
-                    float value = event.jaxis.value/(float)32767;
+                    float value = event.jaxis.value / (float) 32767;
                     CORE.Input.Gamepad.axisState[event.jaxis.which][axis] = value;
 
                     // Register button state for triggers in addition to their axes
                     if ((axis == GAMEPAD_AXIS_LEFT_TRIGGER) || (axis == GAMEPAD_AXIS_RIGHT_TRIGGER))
                     {
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER)? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                         int pressed = (value > 0.1f);
                         CORE.Input.Gamepad.currentButtonState[event.jaxis.which][button] = pressed;
                         if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
@@ -1554,15 +1552,14 @@ int InitPlatform(void)
     // Initialize gamepads
     for (int i = 0; (i < SDL_NumJoysticks()) && (i < MAX_GAMEPADS); i++)
     {
-        platform.gamepad[i] = SDL_GameControllerOpen(i);
-
+        platform.gamepad[i] = SDL_JoystickOpen(i);
         if (platform.gamepad[i])
         {
             CORE.Input.Gamepad.ready[i] = true;
-            CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+            CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(platform.gamepad[i]);
             CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
             CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-            strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), 63);
+            strncpy(CORE.Input.Gamepad.name[i], SDL_JoystickName(platform.gamepad[i]), 63);
             CORE.Input.Gamepad.name[i][63] = '\0';
         }
         else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
@@ -1582,15 +1579,13 @@ int InitPlatform(void)
     CORE.Time.previous = GetTime();     // Get time as double
 
     #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
-    SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1"); // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
+    SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1");     // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
     #endif
     //----------------------------------------------------------------------------
 
     // Initialize storage system
     //----------------------------------------------------------------------------
-    // Define base path for storage
-    CORE.Storage.basePath = SDL_GetBasePath(); // Alternative: GetWorkingDirectory();  
-    CHDIR(CORE.Storage.basePath); 
+    CORE.Storage.basePath = GetWorkingDirectory();  // Define base path for storage
     //----------------------------------------------------------------------------
 
     TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (SDL): Initialized successfully");
@@ -1612,9 +1607,8 @@ static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
 {
     if (sdlScancode >= 0 && sdlScancode < SCANCODE_MAPPED_NUM)
     {
-        return mapScancodeToKey[sdlScancode];
+        return ScancodeToKey[sdlScancode];
     }
-
     return KEY_NULL; // No equivalent key in Raylib
 }
 // EOF

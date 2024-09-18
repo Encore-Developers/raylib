@@ -15,7 +15,7 @@
     {
       "name": "RAYLIB_VERSION_MINOR",
       "type": "INT",
-      "value": 5,
+      "value": 1,
       "description": ""
     },
     {
@@ -27,7 +27,7 @@
     {
       "name": "RAYLIB_VERSION",
       "type": "STRING",
-      "value": "5.5-dev",
+      "value": "5.1-dev",
       "description": ""
     },
     {
@@ -1058,7 +1058,7 @@
         {
           "type": "Vector3",
           "name": "direction",
-          "description": "Ray direction (normalized)"
+          "description": "Ray direction"
         }
       ]
     },
@@ -3215,12 +3215,12 @@
     },
     {
       "name": "ToggleFullscreen",
-      "description": "Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)",
+      "description": "Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)",
       "returnType": "void"
     },
     {
       "name": "ToggleBorderlessWindowed",
-      "description": "Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)",
+      "description": "Toggle window state: borderless windowed (only PLATFORM_DESKTOP)",
       "returnType": "void"
     },
     {
@@ -4523,7 +4523,7 @@
     },
     {
       "name": "LoadDirectoryFilesEx",
-      "description": "Load directory filepaths with extension filtering and recursive directory scan. Use "/DIR" in the filter string to include directories in the result",
+      "description": "Load directory filepaths with extension filtering and recursive directory scan",
       "returnType": "FilePathList",
       "params": [
         {
@@ -5485,11 +5485,11 @@
         },
         {
           "type": "Color",
-          "name": "inner"
+          "name": "color1"
         },
         {
           "type": "Color",
-          "name": "outer"
+          "name": "color2"
         }
       ]
     },
@@ -5785,11 +5785,11 @@
         },
         {
           "type": "Color",
-          "name": "top"
+          "name": "color1"
         },
         {
           "type": "Color",
-          "name": "bottom"
+          "name": "color2"
         }
       ]
     },
@@ -5816,11 +5816,11 @@
         },
         {
           "type": "Color",
-          "name": "left"
+          "name": "color1"
         },
         {
           "type": "Color",
-          "name": "right"
+          "name": "color2"
         }
       ]
     },
@@ -5835,19 +5835,19 @@
         },
         {
           "type": "Color",
-          "name": "topLeft"
+          "name": "col1"
         },
         {
           "type": "Color",
-          "name": "bottomLeft"
+          "name": "col2"
         },
         {
           "type": "Color",
-          "name": "topRight"
+          "name": "col3"
         },
         {
           "type": "Color",
-          "name": "bottomRight"
+          "name": "col4"
         }
       ]
     },
@@ -7184,21 +7184,6 @@
       ]
     },
     {
-      "name": "ImageFromChannel",
-      "description": "Create an image from a selected channel of another image (GRAYSCALE)",
-      "returnType": "Image",
-      "params": [
-        {
-          "type": "Image",
-          "name": "image"
-        },
-        {
-          "type": "int",
-          "name": "selectedChannel"
-        }
-      ]
-    },
-    {
       "name": "ImageText",
       "description": "Create an image from text (default font)",
       "returnType": "Image",
@@ -7366,7 +7351,7 @@
     },
     {
       "name": "ImageKernelConvolution",
-      "description": "Apply custom square convolution kernel to image",
+      "description": "Apply Custom Square image convolution kernel",
       "returnType": "void",
       "params": [
         {
@@ -7374,7 +7359,7 @@
           "name": "image"
         },
         {
-          "type": "const float *",
+          "type": "float*",
           "name": "kernel"
         },
         {
@@ -7833,33 +7818,6 @@
       ]
     },
     {
-      "name": "ImageDrawLineEx",
-      "description": "Draw a line defining thickness within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "start"
-        },
-        {
-          "type": "Vector2",
-          "name": "end"
-        },
-        {
-          "type": "int",
-          "name": "thick"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
       "name": "ImageDrawCircle",
       "description": "Draw a filled circle within an image",
       "returnType": "void",
@@ -8048,141 +8006,6 @@
         {
           "type": "int",
           "name": "thick"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawTriangle",
-      "description": "Draw triangle within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "v1"
-        },
-        {
-          "type": "Vector2",
-          "name": "v2"
-        },
-        {
-          "type": "Vector2",
-          "name": "v3"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawTriangleEx",
-      "description": "Draw triangle with interpolated colors within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "v1"
-        },
-        {
-          "type": "Vector2",
-          "name": "v2"
-        },
-        {
-          "type": "Vector2",
-          "name": "v3"
-        },
-        {
-          "type": "Color",
-          "name": "c1"
-        },
-        {
-          "type": "Color",
-          "name": "c2"
-        },
-        {
-          "type": "Color",
-          "name": "c3"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawTriangleLines",
-      "description": "Draw triangle outline within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "v1"
-        },
-        {
-          "type": "Vector2",
-          "name": "v2"
-        },
-        {
-          "type": "Vector2",
-          "name": "v3"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawTriangleFan",
-      "description": "Draw a triangle fan defined by points within an image (first vertex is the center)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2 *",
-          "name": "points"
-        },
-        {
-          "type": "int",
-          "name": "pointCount"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawTriangleStrip",
-      "description": "Draw a triangle strip defined by points within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2 *",
-          "name": "points"
-        },
-        {
-          "type": "int",
-          "name": "pointCount"
         },
         {
           "type": "Color",
@@ -8781,25 +8604,6 @@
       ]
     },
     {
-      "name": "ColorLerp",
-      "description": "Get color lerp interpolation between two colors, factor [0.0f..1.0f]",
-      "returnType": "Color",
-      "params": [
-        {
-          "type": "Color",
-          "name": "color1"
-        },
-        {
-          "type": "Color",
-          "name": "color2"
-        },
-        {
-          "type": "float",
-          "name": "factor"
-        }
-      ]
-    },
-    {
       "name": "GetColor",
       "description": "Get Color structure from hexadecimal value",
       "returnType": "Color",
@@ -8881,7 +8685,7 @@
     },
     {
       "name": "LoadFontEx",
-      "description": "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
+      "description": "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont",
       "returnType": "Font",
       "params": [
         {
@@ -10386,60 +10190,6 @@
       ]
     },
     {
-      "name": "DrawModelPoints",
-      "description": "Draw a model as points",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Model",
-          "name": "model"
-        },
-        {
-          "type": "Vector3",
-          "name": "position"
-        },
-        {
-          "type": "float",
-          "name": "scale"
-        },
-        {
-          "type": "Color",
-          "name": "tint"
-        }
-      ]
-    },
-    {
-      "name": "DrawModelPointsEx",
-      "description": "Draw a model as points with extended parameters",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Model",
-          "name": "model"
-        },
-        {
-          "type": "Vector3",
-          "name": "position"
-        },
-        {
-          "type": "Vector3",
-          "name": "rotationAxis"
-        },
-        {
-          "type": "float",
-          "name": "rotationAngle"
-        },
-        {
-          "type": "Vector3",
-          "name": "scale"
-        },
-        {
-          "type": "Color",
-          "name": "tint"
-        }
-      ]
-    },
-    {
       "name": "DrawBoundingBox",
       "description": "Draw bounding box (wires)",
       "returnType": "void",
@@ -10473,7 +10223,7 @@
         },
         {
           "type": "float",
-          "name": "scale"
+          "name": "size"
         },
         {
           "type": "Color",

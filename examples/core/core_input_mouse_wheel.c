@@ -36,7 +36,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        boxPositionY -= (int)(GetMouseWheelMove()*scrollSpeed);
+        boxPositionY -= (GetMouseWheelMove()*scrollSpeed);
         //----------------------------------------------------------------------------------
 
         // Draw
