@@ -1121,83 +1121,7 @@ void PollInputEvents(void)
     // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-    // Check if gamepads are ready
-    // NOTE: We do it here in case of disconnection
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        if (glfwJoystickPresent(i)) CORE.Input.Gamepad.ready[i] = true;
-        else CORE.Input.Gamepad.ready[i] = false;
-    }
-
-    // Register gamepads buttons events
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        if (CORE.Input.Gamepad.ready[i])     // Check if gamepad is available
-        {
-            // Register previous gamepad states
-            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
-
-            // Get current gamepad state
-            // NOTE: There is no callback available, so we get it manually
-            GLFWgamepadstate state = { 0 };
-            glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
-
-            const unsigned char *buttons = state.buttons;
-
-            for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
-            {
-                int button = -1;        // GamepadButton enum values assigned
-
-                switch (k)
-                {
-                    case GLFW_GAMEPAD_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
-                    case GLFW_GAMEPAD_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
-                    case GLFW_GAMEPAD_BUTTON_A: button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
-                    case GLFW_GAMEPAD_BUTTON_X: button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
-
-                    case GLFW_GAMEPAD_BUTTON_LEFT_BUMPER: button = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
-                    case GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
-
-                    case GLFW_GAMEPAD_BUTTON_BACK: button = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
-                    case GLFW_GAMEPAD_BUTTON_GUIDE: button = GAMEPAD_BUTTON_MIDDLE; break;
-                    case GLFW_GAMEPAD_BUTTON_START: button = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
-
-                    case GLFW_GAMEPAD_BUTTON_DPAD_UP: button = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
-                    case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
-                    case GLFW_GAMEPAD_BUTTON_DPAD_DOWN: button = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
-                    case GLFW_GAMEPAD_BUTTON_DPAD_LEFT: button = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
-
-                    case GLFW_GAMEPAD_BUTTON_LEFT_THUMB: button = GAMEPAD_BUTTON_LEFT_THUMB; break;
-                    case GLFW_GAMEPAD_BUTTON_RIGHT_THUMB: button = GAMEPAD_BUTTON_RIGHT_THUMB; break;
-                    default: break;
-                }
-
-                if (button != -1)   // Check for valid button
-                {
-                    if (buttons[k] == GLFW_PRESS)
-                    {
-                        CORE.Input.Gamepad.currentButtonState[i][button] = 1;
-                        CORE.Input.Gamepad.lastButtonPressed = button;
-                    }
-                    else CORE.Input.Gamepad.currentButtonState[i][button] = 0;
-                }
-            }
-
-            // Get current axis state
-            const float *axes = state.axes;
-
-            for (int k = 0; (axes != NULL) && (k < GLFW_GAMEPAD_AXIS_LAST + 1) && (k < MAX_GAMEPAD_AXIS); k++)
-            {
-                CORE.Input.Gamepad.axisState[i][k] = axes[k];
-            }
-
-            // Register buttons for 2nd triggers (because GLFW doesn't count these as buttons but rather axis)
-            CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_LEFT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] > 0.1f);
-            CORE.Input.Gamepad.currentButtonState[i][GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = (char)(CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.1f);
-
-            CORE.Input.Gamepad.axisCount[i] = GLFW_GAMEPAD_AXIS_LAST + 1;
-        }
-    }
+    // ENCORE: Remove joystick polling
 
     CORE.Window.resizedLastFrame = false;
 
@@ -1365,11 +1289,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
     }
 
-    // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions.
-    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn.
-    // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience.
-    // REF: https://github.com/raysan5/raylib/issues/1554
-    glfwSetJoystickCallback(NULL);
+    // ENCORE: remove a glfwSetJoystickCallback call here to prevent joystick initialization entirely
 
     GLFWmonitor *monitor = NULL;
     if (CORE.Window.fullscreen)
@@ -1593,15 +1513,11 @@ int InitPlatform(void)
     glfwSetCursorPosCallback(platform.handle, MouseCursorPosCallback);   // Track mouse position changes
     glfwSetScrollCallback(platform.handle, MouseScrollCallback);
     glfwSetCursorEnterCallback(platform.handle, CursorEnterCallback);
-    glfwSetJoystickCallback(JoystickCallback);
+    // ENCORE: remove a glfwSetJoystickCallback call here to prevent joystick initialization entirely
 
     glfwSetInputMode(platform.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
 
-    // Retrieve gamepad names
-    for (int i = 0; i < MAX_GAMEPADS; i++)
-    {
-        if (glfwJoystickPresent(i)) strcpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i));
-    }
+    // ENCORE: Don't retrieve gamepad names
     //----------------------------------------------------------------------------
 
     // Initialize timming system
